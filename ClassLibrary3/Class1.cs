@@ -44,6 +44,71 @@ namespace ParserBAAK12
 
         }
         /// <summary>
+        /// Определяет максимальную амплитуда сигнала на канале, определяет евляется ли сигнал шумом
+        /// </summary>
+
+        /// <param name="data1">значение развертки для 12ти каналов</param>
+        /// <param name="sig">сигма для каждого канала</param>
+        /// <param name="Amp">Максимальная амплитуда</param>
+        /// <param name="Nul">Определенная нулевая линия</param>
+        /// <param name="bad">если tru то сигнал шумовой</param>
+        /// <param name="obrNoise">Определяет необходимость проводить обработку на наличие шумов</param>
+        /// <param name="KoefNoise">соотношение сигнала к просадке после, для определения шума</param>
+        /// <param name="obrNoise">Амплитуда шума</param>
+        /// <param name="obrNoise">Порого срабатывания канала</param>
+        public static void MaxAmpAndNul(int[,] data1, out Double[] sig, out double[] Amp, ref double[] Nul, out bool bad, bool obrNoise, double KoefNoise, int AmpNoise)
+        {
+            bad = false;
+            sig = new Double[12];
+            Amp = new double[12];
+            //bool obrNoise = ClassUserSetUp.ObrNoise;
+            // Nul = new double[12];
+            int Nsob = 150;//число точек от начала для поиска нулевой линнии
+            for (int i = 0; i < 12; i++)
+            {
+                int[] sumNul = new int[Nsob];// точки нулевой линии для "a" - го канала
+                                             // double sred = Enumerable.Range(0, 2).Select(x => f[x]).Sum();
+                for (int a = 0; a < Nsob; a++)
+                {
+                    // Nul[i] = (Nul[i] + data1[i, a]);
+                    sumNul[a] = data1[i, a];// точки нулевой линии для "a"-го канала
+                }
+
+                Nul[i] = Enumerable.Range(0, 150).Select(x => data1[i, x]).Average();
+                sig[i] = Math.Sqrt(Sum(sumNul, Nul[i]) / Nsob);
+
+            }
+            int xbad = 0;
+            for (int z = 0; z < 12; z++)
+            {
+
+
+
+                Amp[z] = (Enumerable.Range(0, 1024).Select(x => data1[z, x]).Max()) - Nul[z];
+                double min = (Enumerable.Range(0, 1024).Select(x => data1[z, x]).Min()) - Nul[z];
+
+                if (obrNoise && Math.Abs(min / Amp[z]) > KoefNoise & Math.Abs(Amp[z]) > AmpNoise)
+                {
+                    xbad++;
+                }
+
+                
+            }
+            if (xbad > 0)
+            {
+                bad = true;
+            }
+        }
+        private static Double Sum(int[] n, double x)
+        {
+            Double res = 0;
+            foreach (int i in n)
+            {
+                res = res + Math.Pow((i - x), 2);
+            }
+            return res;
+        }
+        /// <summary>
         /// Парсер данных платы с хвостом
         /// </summary>
         /// <param name="buf00"></param>
@@ -95,6 +160,33 @@ namespace ParserBAAK12
             return dd + "." + hh + "." + min + "." + sec + "." + ms + "." + mcs + "." + ns;
 
 
+        }
+
+        public static string[] TimeS(int[,] data1, int porogS, double[] Amp, double[] Nul)
+        {
+            string[] Time = new string[12];
+            for(int i=0; i<12; i++)
+            {
+                if(porogS <= Amp[i])
+                {
+                    for(int j=0; j<1024; j++)
+                    {
+                        if(data1[i,j]>=porogS+ Nul[i])
+                        {
+                            Time[i] = j.ToString();
+                            break;
+                        }
+
+                    }
+                }
+                else
+                {
+                    Time[i] = "-1";
+                }
+            }
+
+
+            return Time;
         }
     }
 }
