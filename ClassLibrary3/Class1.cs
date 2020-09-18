@@ -95,7 +95,7 @@ namespace ParserBAAK12
 
                 double nul = p.Sum()/150.0;
                 Nul[i] = nul;
-                sig[i] =Convert.ToInt16( Math.Sqrt(Sum(p, nul) / (Nsob-1)));
+                sig[i] = Math.Sqrt(Sum(p, nul) / (Nsob-1));
                 int[] masZ = new int[data1.Length / 12];
                 for(int s=0; s< data1.Length / 12; s++)
                 {
@@ -123,6 +123,19 @@ namespace ParserBAAK12
             return Enumerable.Range(320, 704).Select(x => masD[x]).Sum();
 
         }
+        static double sum1D(double[] masD, int porog)
+        {
+            double sum = 0;
+            for(int i=320; i< masD.Length; i++)
+            {
+                if(masD[i]>=porog)
+                {
+                    sum += masD[i];
+                }
+            }
+            return sum;
+
+        }
         public static void SumSig(double[,] data1, out double[] sumsin)
         {
 
@@ -147,6 +160,32 @@ namespace ParserBAAK12
            
             // double sred = Enumerable.Range(1, 9).Select(x => mas[x]).Sum();
           
+
+        }
+        public static void SumSig(double[,] data1, out double[] sumsin, int porog)
+        {
+
+            //int[] sumD = new int[1024];
+            double[] mas1 = new double[1024];
+            sumsin = new double[12];
+            for (int i = 0; i < 12; i++)
+            {
+
+                // double sred = Enumerable.Range(0, 2).Select(x => f[x]).Sum();
+                for (int j = 0; j < 1024; j++)
+                {
+                    mas1[j] = data1[i, j];
+
+                }
+
+
+                sumsin[i] = sum1D(mas1, porog);
+                mas1 = new double[1024];
+
+            }
+
+            // double sred = Enumerable.Range(1, 9).Select(x => mas[x]).Sum();
+
 
         }
         private static double Sum(double[] n, double x)
